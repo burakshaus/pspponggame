@@ -1,0 +1,15 @@
+# PSP Build Artifacts
+*.o
+*.elf
+*.PBP
+*.SFO
+EBOOT.PBP
+PARAM.SFO
+psp-pong.elf
+main.o
+
+# Editor files
+*.swp
+*.swo
+*~
+.DS_Store

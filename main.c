@@ -28,24 +28,35 @@ void draw_rect(float x, float y, float w, float h, unsigned int color) {
 }
 
 int main() {
-    pspDebugScreenInit(); // Backup: allows pspDebugScreenPrintf to work
+    // Initialize debug screen for debugging (can use pspDebugScreenPrintf)
+    pspDebugScreenInit();
     
-    // Setup GU
+    // Initialize Graphics with proper frame buffer pointers
+    void* fbp0 = (void*)0x00000000;
+    void* fbp1 = (void*)0x00088000;
+    void* zbp  = (void*)0x00110000;
+    
     sceGuInit();
     sceGuStart(GU_DIRECT, list);
-    sceGuDrawBuffer(GU_PSM_8888, (void*)0, BUF_WIDTH);
-    sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, (void*)0x88000, BUF_WIDTH);
-    sceGuDepthBuffer((void*)0x110000, BUF_WIDTH);
-    sceGuOffset(2048 - (SCR_WIDTH/2), 2048 - (SCR_HEIGHT/2));
+    sceGuDrawBuffer(GU_PSM_8888, fbp0, BUF_WIDTH);
+    sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, fbp1, BUF_WIDTH);
+    sceGuDepthBuffer(zbp, BUF_WIDTH);
+    sceGuOffset(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2));
     sceGuViewport(2048, 2048, SCR_WIDTH, SCR_HEIGHT);
-    sceGuEnable(GU_BLEND);
-    sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
-    sceGuClearColor(0xFF000000); 
-    sceGuDisplay(GU_TRUE);
+    sceGuDepthRange(65535, 0);
+    sceGuScissor(0, 0, SCR_WIDTH, SCR_HEIGHT);
+    sceGuEnable(GU_SCISSOR_TEST);
+    sceGuDepthFunc(GU_GEQUAL);
+    sceGuEnable(GU_DEPTH_TEST);
+    sceGuShadeModel(GU_SMOOTH);
+    sceGuDisable(GU_TEXTURE_2D);
     sceGuFinish();
-    sceGuSync(0,0);
+    sceGuSync(0, 0);
+    sceGuDisplay(GU_TRUE);
 
     SceCtrlData pad;
+    sceCtrlSetSamplingCycle(0);
+    sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
     while (1) {
         sceCtrlPeekBufferPositive(&pad, 1);
         if (pad.Buttons & PSP_CTRL_START) break;
@@ -77,6 +88,7 @@ int main() {
         sceDisplayWaitVblankStart();
         sceGuSwapBuffers();
     }
+    sceGuTerm();
     sceKernelExitGame();
     return 0;
 }
